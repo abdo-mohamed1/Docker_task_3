@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>S.H.I.E.L.D. Secure Database</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Rajdhani:wght@500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --neon-blue: #00f3ff;
+            --dark-bg: #0b0f19;
+            --panel-bg: rgba(16, 26, 41, 0.85);
+            --danger: #ff2a2a;
+        }
+
+        body {
+            background-color: var(--dark-bg);
+            color: var(--neon-blue);
+            font-family: 'Rajdhani', sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-image: 
+                linear-gradient(rgba(0, 243, 255, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 243, 255, 0.03) 1px, transparent 1px);
+            background-size: 30px 30px;
+            min-height: 100vh;
+        }
+
+        h1 {
+            font-family: 'Orbitron', sans-serif;
+            text-align: center;
+            font-size: 3.5rem;
+            text-shadow: 0 0 15px var(--neon-blue);
+            margin-bottom: 5px;
+            letter-spacing: 5px;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: rgba(255, 255, 255, 0.7);
+            margin-bottom: 40px;
+            font-size: 1.2rem;
+            letter-spacing: 2px;
+        }
+
+        .container { max-width: 800px; margin: 0 auto; }
+
+        /* Form Styling */
+        .form-card {
+            background: var(--panel-bg);
+            border: 1px solid var(--neon-blue);
+            padding: 25px;
+            border-radius: 5px;
+            box-shadow: 0 0 20px rgba(0, 243, 255, 0.1);
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            position: relative;
+        }
+
+        .form-card::before {
+            content: ''; position: absolute; top: -1px; left: -1px; width: 15px; height: 15px;
+            border-top: 2px solid var(--neon-blue); border-left: 2px solid var(--neon-blue);
+        }
+        .form-card::after {
+            content: ''; position: absolute; bottom: -1px; right: -1px; width: 15px; height: 15px;
+            border-bottom: 2px solid var(--neon-blue); border-right: 2px solid var(--neon-blue);
+        }
+
+        input {
+            flex: 1;
+            background: rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(0, 243, 255, 0.3);
+            color: #fff;
+            padding: 15px;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.9rem;
+        }
+
+        input:focus { outline: none; border-color: var(--neon-blue); box-shadow: 0 0 10px rgba(0, 243, 255, 0.2); }
+
+        button#addBtn {
+            background: var(--neon-blue);
+            color: #000;
+            border: none;
+            padding: 15px 30px;
+            font-weight: bold;
+            font-family: 'Orbitron', sans-serif;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        button#addBtn:hover { background: #fff; box-shadow: 0 0 20px var(--neon-blue); }
+
+        /* List Styling */
+        ul { list-style: none; padding: 0; margin-top: 40px; }
+
+        li {
+            background: linear-gradient(90deg, rgba(0, 243, 255, 0.05), transparent);
+            border-left: 3px solid var(--neon-blue);
+            margin-bottom: 15px;
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            animation: slideIn 0.5s ease-out;
+        }
+
+        .hero-info { display: flex; flex-direction: column; }
+        .hero-codename { font-family: 'Orbitron'; font-size: 1.4rem; font-weight: bold; color: #fff; }
+        .hero-realname { font-size: 0.9rem; color: rgba(255,255,255,0.6); margin-top: 5px; }
+
+        .btn-delete {
+            background: transparent;
+            border: 1px solid var(--danger);
+            color: var(--danger);
+            padding: 8px 15px;
+            cursor: pointer;
+            font-family: 'Orbitron';
+            transition: 0.3s;
+        }
+
+        .btn-delete:hover { background: var(--danger); color: #fff; box-shadow: 0 0 10px var(--danger); }
+
+        @keyframes slideIn { from { opacity: 0; transform: translateX(-20px); } to { opacity: 1; transform: translateX(0); } }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>S.H.I.E.L.D.</h1>
+    <div class="subtitle">AVENGERS INITIATIVE DATABASE // LEVEL 7 ACCESS</div>
+
+    <div class="form-card">
+        <input type="text" id="codename" placeholder="Codename (e.g. Iron Man)">
+        <input type="text" id="realName" placeholder="Real Name (e.g. Tony Stark)">
+        <input type="text" id="power" placeholder="Ability / Tech">
+        <button id="addBtn" onclick="addHero()">AUTHORIZE</button>
+    </div>
+
+    <ul id="heroList"></ul>
+</div>
+
+<script>
+    const API_URL = 'http://localhost:3000';
+
+    async function loadHeroes() {
+        const res = await fetch(API_URL + '/heroes');
+        const heroes = await res.json();
+        const list = document.getElementById('heroList');
+        list.innerHTML = '';
+        heroes.forEach(h => {
+            list.innerHTML += `
+                <li>
+                    <div class="hero-info">
+                        <span class="hero-codename">${h.codename}</span>
+                        <span class="hero-realname">${h.realName} | ⚡ ${h.power}</span>
+                    </div>
+                    <button class="btn-delete" onclick="deleteHero('${h._id}')">TERMINATE</button>
+                </li>
+            `;
+        });
+    }
+
+    async function addHero() {
+        const codename = document.getElementById('codename').value;
+        const realName = document.getElementById('realName').value;
+        const power = document.getElementById('power').value;
+
+        if(!codename) return alert('ACCESS DENIED: Codename Required.');
+
+        await fetch(API_URL + '/add', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ codename, realName, power })
+        });
+
+        document.getElementById('codename').value = '';
+        document.getElementById('realName').value = '';
+        document.getElementById('power').value = '';
+        loadHeroes();
+    }
+
+    async function deleteHero(id) {
+        if(confirm('WARNING: Confirm deletion of hero record?')) {
+            await fetch(`${API_URL}/delete/${id}`, { method: 'DELETE' });
+            loadHeroes();
+        }
+    }
+
+    loadHeroes();
+</script>
+
+</body>
+</html>
